@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #65e182;
+        }
+        .container {
+            text-align: center;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #word-display {
+            font-size: 24px;
+            margin: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="word-display">Click a button to start</div>
+        <button id="first-btn">第一个单词</button>
+        <button id="prev-btn">上一个单词</button>
+        <button id="next-btn">下一个单词</button>
+        <button id="last-btn">最后一个单词</button>
+        <button id="random-btn">随机单词</button>
+    </div>
+
+    <script>
+        let words = [];
+        let currentIndex = 0;
+
+        // 使用 fetch 读取 cet6.txt 文件
+        fetch('cet6.txt')
+            .then(response => response.text())
+            .then(data => {
+                words = data.split('\n').map(word => word.trim()).filter(Boolean); // 读取并分割每行单词
+            })
+            .catch(error => {
+                document.getElementById('word-display').innerText = 'Failed to load words.';
+                console.error('Error fetching words:', error);
+            });
+
+        // 显示当前单词
+        function displayWord(index) {
+            if (words.length > 0) {
+                document.getElementById('word-display').innerText = words[index];
+            }
+        }
+
+        // 按钮点击事件处理
+        document.getElementById('first-btn').addEventListener('click', () => {
+            currentIndex = 0;
+            displayWord(currentIndex);
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+            }
+            displayWord(currentIndex);
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentIndex < words.length - 1) {
+                currentIndex++;
+            }
+            displayWord(currentIndex);
+        });
+
+        document.getElementById('last-btn').addEventListener('click', () => {
+            currentIndex = words.length - 1;
+            displayWord(currentIndex);
+        });
+
+        document.getElementById('random-btn').addEventListener('click', () => {
+        if (words.length > 0) {
+        const randomIndex = Math.floor(Math.random() * words.length);
+        currentIndex = randomIndex;
+        displayWord(currentIndex);
+        }else {
+            alert('单词列表为空，无法显示随机单词。');
+        }
+        });
+    </script>
+</body>
+</html>
