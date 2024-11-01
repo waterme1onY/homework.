@@ -1,100 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #65e182;
-        }
-        .container {
-            text-align: center;
-        }
-        button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #word-display {
-            font-size: 24px;
-            margin: 20px;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CET-6 单词阅读器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #1a1a2e;
+      color: #e0e0e0;
+      font-family: '宋体', sans-serif;
+      padding: 40px;
+    }
+
+    button {
+      padding: 15px;
+      margin: 15px;
+      border: none;
+      background-color: #0f3460;
+      color: #ffffff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.3s, background-color 0.3s;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      transform: scale(1.1);
+      background-color: #e94560;
+    }
+
+    #word-display {
+      margin-top: 30px;
+      padding: 20px;
+      font-size: 2rem;
+      font-weight: 700;
+      border: 3px solid #0f3460;
+      border-radius: 10px;
+      background-color: #16213e;
+      color: #ffffff;
+    }
+
+    #login-section,
+    #register-section {
+      margin-bottom: 30px;
+      text-align: center;
+      background-color: #0f3460;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      padding: 10px;
+      margin: 10px;
+      font-size: 1rem;
+      border: 2px solid #e94560;
+      border-radius: 5px;
+      background-color: #1a1a2e;
+      color: #ffffff;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder {
+      color: #a0a0a0;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <div id="word-display">Click a button to start</div>
-        <button id="first-btn">第一个单词</button>
-        <button id="prev-btn">上一个单词</button>
-        <button id="next-btn">下一个单词</button>
-        <button id="last-btn">最后一个单词</button>
-        <button id="random-btn">随机单词</button>
-    </div>
+  <h1>CET-6 单词阅读器</h1>
 
-    <script>
-        let words = [];
-        let currentIndex = 0;
+  <!-- 注册部分 -->
+  <div id="register-section">
+    <h3>注册</h3>
+    <input type="text" id="register-username" placeholder="输入用户名" required>
+    <input type="password" id="register-password" placeholder="输入密码" required>
+    <button id="register-button">注册</button>
+  </div>
 
-        // 使用 fetch 读取 cet6.txt 文件
+  <!-- 登录部分 -->
+  <div id="login-section">
+    <h3>登录</h3>
+    <input type="text" id="login-username" placeholder="输入用户名" required>
+    <input type="password" id="login-password" placeholder="输入密码" required>
+    <button id="login-button">登录</button>
+  </div>
+
+  <!-- 单词阅读器部分 (登录前隐藏) -->
+  <div id="word-reader-section" style="display:none;">
+    <button id="first-word">读取第一个单词</button>
+    <button id="next-word">读取下一个单词</button>
+    <button id="random-word">随机读取单词</button>
+    <button id="last-word">读取最后一个单词</button>
+    <div id="word-display">单词将显示在此处</div>
+  </div>
+
+  <script>
+    alert("单词阅读器已隐藏。请注册或登录后使用")
+
+    const users = JSON.parse(localStorage.getItem('users')) || {};
+
+    // 注册功能
+    document.getElementById('register-button').addEventListener('click', function () {
+      const username = document.getElementById('register-username').value;
+      const password = document.getElementById('register-password').value;
+
+      if (!username || !password) {
+        alert('请填写完整用户名和密码');
+        return;
+      }
+
+      if (users[username]) {
+        alert('用户名已存在');
+      } else {
+        users[username] = password;
+        localStorage.setItem('users', JSON.stringify(users));
+        alert('注册成功');
+      }
+    });
+
+    // 登录功能
+    document.getElementById('login-button').addEventListener('click', function () {
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+
+      if (users[username] && users[username] === password) {
+        alert('登录成功');
+        document.getElementById('word-reader-section').style.display = 'block';
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('register-section').style.display = 'none';
+      } else {
+        alert('用户名或密码错误');
+      }
+    });
+
+    // 单词阅读器功能
+    const WordReader = {
+      words: [],
+      currentIndex: 0,
+
+      loadWords: function () {
+        // 读全部单词文件
         fetch('cet6.txt')
-            .then(response => response.text())
-            .then(data => {
-                words = data.split('\n').map(word => word.trim()).filter(Boolean); // 读取并分割每行单词
-            })
-            .catch(error => {
-                document.getElementById('word-display').innerText = 'Failed to load words.';
-                console.error('Error fetching words:', error);
-            });
+          .then(response => response.text())
+          .then(text => {
+            this.words = text.split('\n').filter(word => word.trim() !== '');
+            console.log('单词已装载:', this.words);
+          })
+          .catch(error => console.error('读取文件时出错:', error));
+      },
 
-        // 显示当前单词
-        function displayWord(index) {
-            if (words.length > 0) {
-                document.getElementById('word-display').innerText = words[index];
-            }
+      getFirstWord: function () {
+        if (this.words.length > 0) {
+          this.currentIndex = 0;
+          this.displayWord(this.words[0]);
+        } else {
+          this.displayError();
         }
+      },
 
-        // 按钮点击事件处理
-        document.getElementById('first-btn').addEventListener('click', () => {
-            currentIndex = 0;
-            displayWord(currentIndex);
-        });
-
-        document.getElementById('prev-btn').addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-            }
-            displayWord(currentIndex);
-        });
-
-        document.getElementById('next-btn').addEventListener('click', () => {
-            if (currentIndex < words.length - 1) {
-                currentIndex++;
-            }
-            displayWord(currentIndex);
-        });
-
-        document.getElementById('last-btn').addEventListener('click', () => {
-            currentIndex = words.length - 1;
-            displayWord(currentIndex);
-        });
-
-        document.getElementById('random-btn').addEventListener('click', () => {
-        if (words.length > 0) {
-        const randomIndex = Math.floor(Math.random() * words.length);
-        currentIndex = randomIndex;
-        displayWord(currentIndex);
-        }else {
-            alert('单词列表为空，无法显示随机单词。');
+      getNextWord: function () {
+        if (this.words.length > 0) {
+          this.currentIndex = (this.currentIndex + 1) % this.words.length;
+          this.displayWord(this.words[this.currentIndex]);
+        } else {
+          this.displayError();
         }
-        });
-    </script>
+      },
+
+      getRandomWord: function () {
+        if (this.words.length > 0) {
+          const randomIndex = Math.floor(Math.random() * this.words.length);
+          this.displayWord(this.words[randomIndex]);
+        } else {
+          this.displayError();
+        }
+      },
+
+      getLastWord: function () {
+        if (this.words.length > 0) {
+          this.currentIndex = this.words.length - 1;
+          this.displayWord(this.words[this.currentIndex]);
+        } else {
+          this.displayError();
+        }
+      },
+
+      displayWord: function (word) {
+        document.getElementById('word-display').innerText = word;
+      },
+
+      displayError: function () {
+        document.getElementById('word-display').innerText = '无法读取单词列表。请检查文件。';
+      }
+    };
+
+    WordReader.loadWords();
+
+    document.getElementById('first-word').addEventListener('click', () => WordReader.getFirstWord());
+    document.getElementById('next-word').addEventListener('click', () => WordReader.getNextWord());
+    document.getElementById('random-word').addEventListener('click', () => WordReader.getRandomWord());
+    document.getElementById('last-word').addEventListener('click', () => WordReader.getLastWord());
+  </script>
 </body>
+
 </html>
